@@ -142,4 +142,4 @@ Bicol University Polangui
 
 ---
 
-If you want, I can also give you a **much stronger GitHub README that looks like a professional open-source project**, which can make your repository **look very impressive when your professor checks it**.
+
