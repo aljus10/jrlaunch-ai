@@ -1,13 +1,42 @@
 import db from "../../../lib/db";
 
-type ChatMessage = {
-  role: "user" | "bot";
-  text: string;
-};
+function normalize(text: string) {
+  return (text || "").toLowerCase().trim();
+}
+
+function containsAny(text: string, words: string[]) {
+  return words.some((word) => text.includes(word));
+}
+
+function parseFaqs(faqText: string) {
+  return (faqText || "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [q, ...rest] = line.split("|");
+      return {
+        q: (q || "").trim(),
+        a: rest.join("|").trim(),
+      };
+    })
+    .filter((item) => item.q && item.a);
+}
+
+function similarityScore(a: string, b: string) {
+  const aa = normalize(a).split(/\W+/).filter(Boolean);
+  const bb = normalize(b).split(/\W+/).filter(Boolean);
+
+  let score = 0;
+  for (const word of aa) {
+    if (bb.includes(word)) score++;
+  }
+  return score;
+}
 
 export async function POST(req: Request) {
   try {
-    const { slug, question, history } = await req.json();
+    const { slug, question } = await req.json();
 
     if (!slug || !question) {
       return Response.json({ answer: "Missing slug or question." }, { status: 400 });
@@ -19,70 +48,102 @@ export async function POST(req: Request) {
       return Response.json({ answer: "Business not found." }, { status: 404 });
     }
 
-    const safeHistory: ChatMessage[] = Array.isArray(history) ? history.slice(-6) : [];
+    const q = normalize(question);
+    const faqs = parseFaqs(row.faqs || "");
 
-    const historyText = safeHistory
-      .map((m) => `${m.role === "user" ? "Customer" : "Assistant"}: ${m.text}`)
-      .join("\n");
+    // 1. Greetings
+    if (containsAny(q, ["hi", "hello", "hey", "good morning", "good afternoon", "good evening"])) {
+      return Response.json({
+        answer: `Hello! How can I help you with ${row.name || "our business"} today?`,
+      });
+    }
 
-    const context = `
-You are a customer support assistant for this business.
+    // 2. Hours
+    if (containsAny(q, ["hour", "open", "close", "closing", "opening", "time"])) {
+      if (row.hours) {
+        return Response.json({
+          answer: `Our business hours are ${row.hours}.`,
+        });
+      }
+    }
 
-Use ONLY the business information, FAQs, and recent conversation below.
-Reply with ONLY the final answer to the customer's latest message.
+    // 3. Location / address
+    if (containsAny(q, ["where", "location", "address", "located"])) {
+      if (row.location) {
+        return Response.json({
+          answer: `We are located at ${row.location}.`,
+        });
+      }
+    }
 
-Rules:
-- Be conversational and context-aware.
-- If the customer says a greeting like "hi" or "hello", greet them briefly and ask how you can help.
-- If the customer asks a follow-up like "ok then?" or "how about that?", use the recent conversation to understand what they mean.
-- Do NOT explain your reasoning.
-- Do NOT create examples unless asked.
-- Keep the answer short, clear, and natural.
-- Maximum 2 sentences.
-- If the answer is not found, reply exactly:
-I’m not sure. Please contact us.
+    // 4. Phone / contact number
+    if (containsAny(q, ["phone", "number", "contact number", "call"])) {
+      if (row.phone) {
+        return Response.json({
+          answer: `You can call us at ${row.phone}.`,
+        });
+      }
+    }
 
-Business Info:
-Name: ${row.name}
-Location: ${row.location}
-Hours: ${row.hours}
-Phone: ${row.phone}
-Email: ${row.email}
-Services: ${row.services}
+    // 5. Email
+    if (containsAny(q, ["email", "gmail", "mail", "contact email"])) {
+      if (row.email) {
+        return Response.json({
+          answer: `You can email us at ${row.email}.`,
+        });
+      }
+    }
 
-FAQs:
-${row.faqs}
+    // 6. Services
+    if (containsAny(q, ["service", "offer", "do you have", "what do you do", "available"])) {
+      if (row.services) {
+        return Response.json({
+          answer: `Our services include ${row.services}.`,
+        });
+      }
+    }
 
-Recent conversation:
-${historyText}
+    // 7. FAQ matching
+    let bestFaq = null;
+    let bestScore = 0;
 
-Latest customer message:
-${question}
-`;
+    for (const faq of faqs) {
+      const score = similarityScore(q, faq.q);
+      if (score > bestScore) {
+        bestScore = score;
+        bestFaq = faq;
+      }
+    }
 
-    const ollamaRes = await fetch("http://127.0.0.1:11434/api/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "phi3:mini",
-        prompt: context,
-        stream: false,
-      }),
+    if (bestFaq && bestScore >= 1) {
+      return Response.json({
+        answer: bestFaq.a,
+      });
+    }
+
+    // 8. Simple fallback by checking if question contains FAQ keywords
+    for (const faq of faqs) {
+      const faqQuestion = normalize(faq.q);
+      if (
+        faqQuestion.includes(q) ||
+        q.includes(faqQuestion) ||
+        faqQuestion.split(/\W+/).some((word) => word && q.includes(word))
+      ) {
+        return Response.json({
+          answer: faq.a,
+        });
+      }
+    }
+
+    // 9. Final fallback
+    return Response.json({
+      answer: "I’m not sure. Please contact us for more details.",
     });
-
-    const raw = await ollamaRes.json();
-
-    let answer = (raw?.response || "I’m not sure. Please contact us.").trim();
-
-    answer = answer
-      .replace(/^Answer:\s*/i, "")
-      .replace(/^Bot:\s*/i, "")
-      .replace(/^Response:\s*/i, "")
-      .trim();
-
-    return Response.json({ answer });
   } catch (error) {
     console.error("CHAT API ERROR:", error);
-    return Response.json({ answer: "Server error in chatbot." }, { status: 500 });
+    return Response.json(
+      { answer: "Server error in chatbot." },
+      { status: 500 }
+    );
   }
 }
