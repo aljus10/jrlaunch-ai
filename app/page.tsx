@@ -16,8 +16,7 @@ const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 
 function buildHours(days: string[], start: string, end: string) {
   if (!days.length || !start || !end) return "";
-  const daysText = days.join(", ");
-  return `${daysText} ${start}–${end}`;
+  return `${days.join(", ")} ${start}–${end}`;
 }
 
 function buildFaqsText(faqs: FAQ[]) {
@@ -33,19 +32,17 @@ export default function Home() {
     name: "",
     industry: "",
     location: "",
-    hours: "", // auto-generated from picker
+    hours: "",
     phone: "",
     email: "",
     services: "",
-    faqs: "", // auto-generated from FAQ builder
+    faqs: "",
   });
 
-  // Hours picker state
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("18:00");
 
-  // FAQ builder state (starts with 2 guided rows)
   const [faqsList, setFaqsList] = useState<FAQ[]>([
     { q: "Do you accept GCash?", a: "Yes, we accept GCash." },
     { q: "Do you deliver?", a: "Yes, within 3km." },
@@ -55,7 +52,6 @@ export default function Home() {
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // progress (simple)
   const progress = useMemo(() => {
     const keys = ["name", "industry", "location", "phone", "email", "services"] as const;
     const filled = keys.filter((k) => String((form as any)[k]).trim().length > 0).length;
@@ -63,8 +59,9 @@ export default function Home() {
     const hoursReady = selectedDays.length > 0 && startTime && endTime;
     const faqsReady = buildFaqsText(faqsList).trim().length > 0;
 
-    const total = keys.length + 2; // +hours +faqs
+    const total = keys.length + 2;
     const done = filled + (hoursReady ? 1 : 0) + (faqsReady ? 1 : 0);
+
     return Math.round((done / total) * 100);
   }, [form, selectedDays, startTime, endTime, faqsList]);
 
@@ -73,7 +70,7 @@ export default function Home() {
     padding: "12px 12px",
     background: "rgba(255,255,255,0.06)",
     color: COLORS.text,
-    border: `1px solid rgba(211,217,212,0.18)`,
+    border: "1px solid rgba(211,217,212,0.18)",
     borderRadius: 12,
     outline: "none",
   };
@@ -98,29 +95,25 @@ export default function Home() {
     setSelectedDays((prev) => {
       const has = prev.includes(day);
       const next = has ? prev.filter((d) => d !== day) : [...prev, day];
-      // update form.hours as well
-      const hoursText = buildHours(next, startTime, endTime);
-      setField("hours", hoursText);
+      setField("hours", buildHours(next, startTime, endTime));
       return next;
     });
   }
 
   function updateTime(which: "start" | "end", value: string) {
-    if (which === "start") setStartTime(value);
-    else setEndTime(value);
-
     const s = which === "start" ? value : startTime;
     const e = which === "end" ? value : endTime;
 
-    const hoursText = buildHours(selectedDays, s, e);
-    setField("hours", hoursText);
+    if (which === "start") setStartTime(value);
+    else setEndTime(value);
+
+    setField("hours", buildHours(selectedDays, s, e));
   }
 
   function updateFaq(idx: number, key: keyof FAQ, value: string) {
     setFaqsList((prev) => {
       const copy = [...prev];
       copy[idx] = { ...copy[idx], [key]: value };
-      // update form.faqs text for backend
       setField("faqs", buildFaqsText(copy));
       return copy;
     });
@@ -147,10 +140,7 @@ export default function Home() {
     if (!form.services.trim()) return "Please add at least 1 service.";
     if (!selectedDays.length) return "Select business days for Hours.";
     if (!startTime || !endTime) return "Select start and end time for Hours.";
-
-    const faqsText = buildFaqsText(faqsList).trim();
-    if (!faqsText) return "Please add at least 1 FAQ (Question + Answer).";
-
+    if (!buildFaqsText(faqsList).trim()) return "Please add at least 1 FAQ.";
     return null;
   }
 
@@ -161,7 +151,6 @@ export default function Home() {
       return;
     }
 
-    // Ensure backend fields are up-to-date
     const hoursText = buildHours(selectedDays, startTime, endTime);
     const faqsText = buildFaqsText(faqsList);
 
@@ -182,14 +171,23 @@ export default function Home() {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      const text = await res.text();
+      let data: any = {};
+
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(text || "Server returned invalid response.");
+      }
+
       if (!res.ok) {
         setError(data?.error || "Generate failed.");
         return;
       }
+
       setResult(data.slug);
     } catch (e: any) {
-      setError(String(e));
+      setError(String(e.message || e));
     } finally {
       setLoading(false);
     }
@@ -206,7 +204,6 @@ export default function Home() {
       }}
     >
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        {/* Top bar */}
         <div
           style={{
             display: "flex",
@@ -220,7 +217,6 @@ export default function Home() {
             backdropFilter: "blur(8px)",
           }}
         >
-          {/* Logo (separate + clear) */}
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div
               style={{
@@ -234,7 +230,6 @@ export default function Home() {
                 color: COLORS.text,
                 boxShadow: "0 10px 24px rgba(18,78,102,0.35)",
               }}
-              title="JRLaunch AI"
             >
               JR
             </div>
@@ -250,7 +245,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Progress */}
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div
               style={{
@@ -261,7 +255,6 @@ export default function Home() {
                 background: "rgba(255,255,255,0.05)",
                 overflow: "hidden",
               }}
-              title={`Setup progress: ${progress}%`}
             >
               <div
                 style={{
@@ -277,7 +270,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Hero + How it works */}
         <div
           style={{
             marginTop: 18,
@@ -286,7 +278,6 @@ export default function Home() {
             gap: 16,
           }}
         >
-          {/* Hero */}
           <div
             style={{
               background: COLORS.card,
@@ -296,8 +287,7 @@ export default function Home() {
             }}
           >
             <h1 style={{ margin: 0, fontSize: 44, lineHeight: 1.08, letterSpacing: -0.5 }}>
-              Launch your business online in{" "}
-              <span style={{ color: "#9fd3e6" }}>seconds</span>.
+              Launch your business online in <span style={{ color: "#9fd3e6" }}>seconds</span>.
             </h1>
 
             <p style={{ marginTop: 12, color: "rgba(211,217,212,0.78)", lineHeight: 1.6 }}>
@@ -385,7 +375,6 @@ export default function Home() {
             )}
           </div>
 
-          {/* How it works (NO extra big gray box anymore) */}
           <div
             style={{
               background: COLORS.card,
@@ -398,7 +387,7 @@ export default function Home() {
 
             {[
               { n: "1", t: "Fill business details", d: "Name, location, hours, services, FAQs" },
-              { n: "2", t: "AI generates copy", d: "Tagline, About, CTA (offline-first)" },
+              { n: "2", t: "Generate website copy", d: "Tagline, About, CTA" },
               { n: "3", t: "Publish + Chatbot", d: "Share the link with customers instantly" },
             ].map((s) => (
               <div
@@ -440,7 +429,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Form */}
         <div
           style={{
             marginTop: 16,
@@ -493,7 +481,6 @@ export default function Home() {
               />
             </div>
 
-            {/* HOURS PICKER */}
             <div>
               <label style={labelStyle}>Hours (pick days + time)</label>
 
@@ -583,7 +570,6 @@ export default function Home() {
             />
           </div>
 
-          {/* FAQ BUILDER */}
           <div style={{ marginTop: 14 }}>
             <label style={labelStyle}>FAQs (easy builder)</label>
             <div style={{ fontSize: 12, color: "rgba(211,217,212,0.70)", marginBottom: 10 }}>
