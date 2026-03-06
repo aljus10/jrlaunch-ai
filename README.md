@@ -1,137 +1,122 @@
-# JRLaunch AI
-
-### Prototype for Technical Proposal
-
-JRLaunch AI is a prototype web application developed as part of a **Technical Proposal for Emerging Technology Solutions**. The system demonstrates how artificial intelligence and modern web technologies can assist small business owners in creating a simple business website with an integrated customer support chatbot.
-
-The goal of the project is to provide an accessible platform where users can input basic business information and automatically generate a one-page website along with a chatbot capable of answering common customer inquiries.
 
 ---
 
-# Project Purpose
+# JRLaunch AI
 
-Many small businesses lack the technical skills required to build websites or implement automated customer support systems. JRLaunch AI aims to simplify this process by allowing business owners to:
+### AI-Assisted Website & Chatbot Generator (Prototype)
+
+**JRLaunch AI** is a prototype web application developed for a **Technical Proposal on Emerging Technology Solutions**.
+
+The system demonstrates how **AI and modern web technologies** can help small business owners quickly create a **simple business website with an integrated customer support chatbot**.
+
+Users only need to enter basic business information, and the system generates a **one-page website and automated customer support responses**.
+
+---
+
+## Project Purpose
+
+Many small businesses struggle to build websites or implement customer support systems due to limited technical knowledge.
+
+**JRLaunch AI simplifies this process by allowing users to:**
 
 * Enter basic business information
 * Generate a simple one-page business website
-* Provide automated responses to customer questions through a chatbot
+* Provide automated responses through a chatbot
 
-This prototype demonstrates the feasibility of the proposed system described in the technical proposal.
+This prototype demonstrates the **feasibility of an AI-assisted digital presence generator**.
 
 ---
 
-# Technology Stack
+## Technology Stack
 
-Frontend
+**Frontend**
 
 * Next.js
 * React
 * TypeScript
 
-Backend
+**Backend**
 
 * Next.js API Routes
 
-Database
+**Database**
 
-* SQLite (prototype storage)
+* SQLite (Prototype Storage)
 
-AI Processing
+**AI Processing**
 
-* Rule-based responses for the demo prototype
+* Rule-based chatbot responses
 * Optional AI-assisted response generation
 
-Development Tools
+**Development Tools**
 
 * Visual Studio Code
 * GitHub
 
 ---
 
-# Getting Started
+## Getting Started
 
-This project was built using **Next.js** and initialized with `create-next-app`.
-
-To run the prototype locally:
+Run the project locally:
 
 ```bash
 npm install
 npm run dev
 ```
 
-Then open your browser and go to:
+Then open:
 
 ```
 http://localhost:3000
 ```
 
-You will see the JRLaunch AI prototype interface.
-
 ---
 
-# Project Structure
+## Project Structure
 
 ```
-/app
-  page.tsx           Main interface
-  layout.tsx         Application layout
+app/
+ ├─ page.tsx        # Main interface
+ └─ layout.tsx      # Application layout
 
-/components
-  ChatWidget.tsx     Customer chatbot interface
-  BusinessForm.tsx   Business information input form
+components/
+ ├─ ChatWidget.tsx  # Chatbot interface
+ └─ BusinessForm.tsx# Business information form
 
-/lib
-  chatbot.ts         Chatbot response logic
+lib/
+ └─ chatbot.ts      # Chatbot logic
 ```
 
 ---
 
-# Features
+## Key Features
 
 * Business information input form
-* FAQ builder for common questions
-* One-page business website generation
-* Integrated chatbot for customer inquiries
+* FAQ builder for customer questions
+* One-page website generation
+* Integrated customer support chatbot
 * Prototype demonstration of automated digital presence creation
 
 ---
 
-# Live Demo
+## Live Demo
 
-Prototype deployment:
-
-```
-https://jrlaunch-ai.aljusfin.workers.dev/
-```
+[https://jrlaunch-ai.aljusfin.workers.dev/](https://jrlaunch-ai.aljusfin.workers.dev/)
 
 ---
 
-# Technical Proposal Context
+## Technical Proposal
 
-This prototype supports the technical proposal titled:
+This prototype supports the proposal titled:
 
-**JRLaunch AI: An AI-Assisted Website and Customer Support Chatbot Generator for Small Businesses with Limited Technical Background**
-
-The system demonstrates the concept described in the proposal by showing how a business owner can generate a website and chatbot using minimal technical input.
+**“JRLaunch AI: An AI-Assisted Website and Customer Support Chatbot Generator for Small Businesses with Limited Technical Background.”**
 
 ---
 
-# Future Improvements
+## Author
 
-Potential future enhancements include:
-
-* AI-powered content generation
-* Improved chatbot natural language responses
-* Multi-page website templates
-* Cloud database integration
-* Business analytics dashboard
-
----
-
-# Author
-
-AL Justin Marollano
-BSCS 2A
+**AL Jus10 Marollano**
+BSCS Student
 Bicol University Polangui
 
 ---
