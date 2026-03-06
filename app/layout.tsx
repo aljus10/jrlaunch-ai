@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "JuztiLaunch AI",
+  title: "JRLaunch AI",
   description: "AI-powered website and chatbot generator for small businesses.",
 };
 

@@ -234,14 +234,14 @@ export default function Home() {
                 color: COLORS.text,
                 boxShadow: "0 10px 24px rgba(18,78,102,0.35)",
               }}
-              title="JuztiLaunch AI"
+              title="JRLaunch AI"
             >
-              JL
+              JR
             </div>
 
             <div style={{ lineHeight: 1.05 }}>
               <div style={{ fontWeight: 900, letterSpacing: 0.3, fontSize: 16 }}>
-                <span>JuztiLaunch</span>{" "}
+                <span>JRLaunch</span>{" "}
                 <span style={{ color: COLORS.muted, fontWeight: 800, fontSize: 12 }}>AI</span>
               </div>
               <div style={{ fontSize: 12, color: "rgba(211,217,212,0.75)" }}>
@@ -467,7 +467,7 @@ export default function Home() {
               <label style={labelStyle}>Business Name</label>
               <input
                 style={inputStyle}
-                placeholder="e.g., Juzti Barber Studio"
+                placeholder="e.g., Justin Barber Studio"
                 value={form.name}
                 onChange={(e) => setField("name", e.target.value)}
               />
@@ -658,7 +658,7 @@ export default function Home() {
         </div>
 
         <div style={{ marginTop: 16, textAlign: "center", color: "rgba(211,217,212,0.60)", fontSize: 12 }}>
-          © {new Date().getFullYear()} JuztiLaunch AI — Prototype build
+          © {new Date().getFullYear()} JRLaunch AI — Prototype build
         </div>
       </div>
     </main>
