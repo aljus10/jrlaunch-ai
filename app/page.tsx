@@ -49,19 +49,15 @@ export default function Home() {
   ]);
 
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const progress = useMemo(() => {
     const keys = ["name", "industry", "location", "phone", "email", "services"] as const;
     const filled = keys.filter((k) => String((form as any)[k]).trim().length > 0).length;
-
     const hoursReady = selectedDays.length > 0 && startTime && endTime;
     const faqsReady = buildFaqsText(faqsList).trim().length > 0;
-
     const total = keys.length + 2;
     const done = filled + (hoursReady ? 1 : 0) + (faqsReady ? 1 : 0);
-
     return Math.round((done / total) * 100);
   }, [form, selectedDays, startTime, endTime, faqsList]);
 
@@ -87,7 +83,6 @@ export default function Home() {
 
   function setField(name: string, value: string) {
     setError(null);
-    setResult(null);
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
@@ -151,41 +146,47 @@ export default function Home() {
       return;
     }
 
-    const hoursText = buildHours(selectedDays, startTime, endTime);
-    const faqsText = buildFaqsText(faqsList);
-
-    const payload = {
-      ...form,
-      hours: hoursText,
-      faqs: faqsText,
-    };
-
     try {
       setLoading(true);
       setError(null);
-      setResult(null);
 
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const hoursText = buildHours(selectedDays, startTime, endTime);
+      const faqsText = buildFaqsText(faqsList);
+      const servicesList = (form.services || "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
 
-      const text = await res.text();
-      let data: any = {};
+      const primaryService = servicesList[0] || "services";
 
-      try {
-        data = JSON.parse(text);
-      } catch {
-        throw new Error(text || "Server returned invalid response.");
-      }
+      const previewData = {
+        slug: `${(form.name || "business").toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Math.floor(
+          Math.random() * 10000
+        )}`,
+        name: form.name,
+        industry: form.industry,
+        location: form.location,
+        hours: hoursText,
+        phone: form.phone,
+        email: form.email,
+        services: form.services,
+        faqs: faqsText,
+        generated: {
+          tagline: `Trusted ${form.industry || "business"} solutions for your everyday needs.`,
+          about: `${form.name || "This business"} is a ${form.industry || "local business"} based in ${
+            form.location || "your area"
+          }, committed to providing reliable ${primaryService.toLowerCase()} and quality customer service.`,
+          services_intro: servicesList.length
+            ? `We offer the following services: ${servicesList.join(", ")}.`
+            : `We offer reliable services tailored to your needs.`,
+          cta: form.phone
+            ? `Contact us today at ${form.phone} for inquiries and bookings.`
+            : `Contact us today for inquiries and bookings.`,
+        },
+      };
 
-      if (!res.ok) {
-        setError(data?.error || "Generate failed.");
-        return;
-      }
-
-      setResult(data.slug);
+      localStorage.setItem("jrlaunch_preview", JSON.stringify(previewData));
+      window.location.href = "/preview";
     } catch (e: any) {
       setError(String(e.message || e));
     } finally {
@@ -214,7 +215,6 @@ export default function Home() {
             border: "1px solid rgba(211,217,212,0.14)",
             borderRadius: 16,
             background: "rgba(46,57,68,0.65)",
-            backdropFilter: "blur(8px)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -228,7 +228,6 @@ export default function Home() {
                 placeItems: "center",
                 fontWeight: 900,
                 color: COLORS.text,
-                boxShadow: "0 10px 24px rgba(18,78,102,0.35)",
               }}
             >
               JR
@@ -325,7 +324,6 @@ export default function Home() {
                   background: loading ? "rgba(255,255,255,0.10)" : COLORS.accent,
                   color: COLORS.text,
                   cursor: loading ? "not-allowed" : "pointer",
-                  boxShadow: "0 12px 26px rgba(18,78,102,0.32)",
                 }}
               >
                 {loading ? "Launching..." : "Launch Website"}
@@ -351,28 +349,6 @@ export default function Home() {
                 {error}
               </div>
             )}
-
-            {result && (
-              <div
-                style={{
-                  marginTop: 14,
-                  padding: "12px 12px",
-                  borderRadius: 14,
-                  border: "1px solid rgba(159,211,230,0.35)",
-                  background: "rgba(18,78,102,0.18)",
-                  color: "rgba(211,217,212,0.95)",
-                  fontSize: 13,
-                }}
-              >
-                ✅ Published:{" "}
-                <a
-                  href={`/site/${result}`}
-                  style={{ color: "#9fd3e6", fontWeight: 900, textDecoration: "none" }}
-                >
-                  /site/{result}
-                </a>
-              </div>
-            )}
           </div>
 
           <div
@@ -388,7 +364,7 @@ export default function Home() {
             {[
               { n: "1", t: "Fill business details", d: "Name, location, hours, services, FAQs" },
               { n: "2", t: "Generate website copy", d: "Tagline, About, CTA" },
-              { n: "3", t: "Publish + Chatbot", d: "Share the link with customers instantly" },
+              { n: "3", t: "Preview + Chatbot", d: "Instant browser-based demo" },
             ].map((s) => (
               <div
                 key={s.n}
@@ -413,7 +389,6 @@ export default function Home() {
                     justifyContent: "center",
                     fontWeight: 900,
                     color: COLORS.text,
-                    flex: "0 0 auto",
                   }}
                 >
                   {s.n}
@@ -511,26 +486,12 @@ export default function Home() {
 
               <div style={{ display: "flex", gap: 10 }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12, color: "rgba(211,217,212,0.75)", marginBottom: 6 }}>
-                    Start
-                  </div>
-                  <input
-                    type="time"
-                    value={startTime}
-                    onChange={(e) => updateTime("start", e.target.value)}
-                    style={inputStyle}
-                  />
+                  <div style={{ fontSize: 12, color: "rgba(211,217,212,0.75)", marginBottom: 6 }}>Start</div>
+                  <input type="time" value={startTime} onChange={(e) => updateTime("start", e.target.value)} style={inputStyle} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12, color: "rgba(211,217,212,0.75)", marginBottom: 6 }}>
-                    End
-                  </div>
-                  <input
-                    type="time"
-                    value={endTime}
-                    onChange={(e) => updateTime("end", e.target.value)}
-                    style={inputStyle}
-                  />
+                  <div style={{ fontSize: 12, color: "rgba(211,217,212,0.75)", marginBottom: 6 }}>End</div>
+                  <input type="time" value={endTime} onChange={(e) => updateTime("end", e.target.value)} style={inputStyle} />
                 </div>
               </div>
 
@@ -589,13 +550,13 @@ export default function Home() {
                 >
                   <input
                     style={inputStyle}
-                    placeholder="Question (e.g., Do you accept GCash?)"
+                    placeholder="Question"
                     value={f.q}
                     onChange={(e) => updateFaq(idx, "q", e.target.value)}
                   />
                   <input
                     style={inputStyle}
-                    placeholder="Answer (e.g., Yes, we accept GCash.)"
+                    placeholder="Answer"
                     value={f.a}
                     onChange={(e) => updateFaq(idx, "a", e.target.value)}
                   />
@@ -611,7 +572,6 @@ export default function Home() {
                       cursor: "pointer",
                       fontWeight: 900,
                     }}
-                    title="Remove FAQ"
                   >
                     ✕
                   </button>
