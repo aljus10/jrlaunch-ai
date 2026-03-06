@@ -1,9 +1,3 @@
-Here is a **clean README.md rewritten specifically for your technical proposal prototype**. You can paste this directly into your GitHub **README.md**.
-
-It removes the duplicate template text and explains **your project clearly for your professor**.
-
----
-
 # JRLaunch AI
 
 ### Prototype for Technical Proposal
